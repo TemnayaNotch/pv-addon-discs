@@ -133,57 +133,59 @@ class BurnCommand : SubCommand() {
                 discHelper.showSongTooltip(item, false)
             }
 
-            item.editMeta { meta ->
-                meta.addItemFlags(*ItemFlag.values())
+            val meta = item.itemMeta ?: return@suspendSync
 
-                meta.persistentDataContainer.set(
-                    keys.identifierKey,
-                    PersistentDataType.STRING,
-                    identifier
-                )
+            meta.addItemFlags(*ItemFlag.values())
 
-                if (config.addGlintToCustomDiscs) {
-                    with(keys) { meta.forbidGrindstone() }
-                    meta.addEnchant(Enchantment.MENDING, 1, false)
-                }
+            meta.persistentDataContainer.set(
+                keys.identifierKey,
+                PersistentDataType.STRING,
+                identifier
+            )
 
-                if (isGoatHorn) {
-                    hornHelper.getInstrument(item)
-                        .takeIf { it.isNotEmpty() }
-                        ?.let {
-                            meta.persistentDataContainer.set(
-                                keys.instrumentKey,
-                                PersistentDataType.STRING,
-                                it
-                            )
-                        }
-                }
-
-                val loreName = Component.text()
-                    .content(name)
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.GRAY)
-                    .build()
-
-                when (config.burnLoreMethod) {
-                    AddonConfig.LoreMethod.REPLACE -> {
-                        meta.lore(listOf(loreName))
-                    }
-
-                    AddonConfig.LoreMethod.APPEND -> {
-                        val currentLore = meta.lore()?.let {
-                            if (with(keys) { item.isCustomDisc() }) {
-                                it.subList(0, it.size - 1)
-                            } else {
-                                it
-                            }
-                        } ?: emptyList()
-                        meta.lore(currentLore + listOf(loreName))
-                    }
-
-                    AddonConfig.LoreMethod.DISABLE -> {} // do nothing
-                }
+            if (config.addGlintToCustomDiscs) {
+                with(keys) { meta.forbidGrindstone() }
+                meta.addEnchant(Enchantment.MENDING, 1, false)
             }
+
+            if (isGoatHorn) {
+                hornHelper.getInstrument(item)
+                    .takeIf { it.isNotEmpty() }
+                    ?.let {
+                        meta.persistentDataContainer.set(
+                            keys.instrumentKey,
+                            PersistentDataType.STRING,
+                            it
+                        )
+                    }
+            }
+
+            val loreName = Component.text()
+                .content(name)
+                .decoration(TextDecoration.ITALIC, false)
+                .color(NamedTextColor.GRAY)
+                .build()
+
+            when (config.burnLoreMethod) {
+                AddonConfig.LoreMethod.REPLACE -> {
+                    meta.lore(listOf(loreName))
+                }
+
+                AddonConfig.LoreMethod.APPEND -> {
+                    val currentLore = meta.lore()?.let {
+                        if (with(keys) { item.isCustomDisc() }) {
+                            it.subList(0, it.size - 1)
+                        } else {
+                            it
+                        }
+                    } ?: emptyList()
+                    meta.lore(currentLore + listOf(loreName))
+                }
+
+                AddonConfig.LoreMethod.DISABLE -> {} // do nothing
+            }
+
+            item.itemMeta = meta
 
             if (isGoatHorn) {
                 hornHelper.setEmptyInstrument(item)
